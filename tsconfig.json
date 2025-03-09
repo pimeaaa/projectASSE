@@ -1,17 +1,12 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "types": ["react-native-svg"],
+    "typeRoots": ["./node_modules/@types", "./path/to/declarations.d.ts"],
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }
