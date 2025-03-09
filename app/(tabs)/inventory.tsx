@@ -1,4 +1,5 @@
 import { InventoryCategory } from "@/components/InventoryCategory";
+import { Stack, useRouter } from "expo-router";
 import React from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { commonStyles } from "../styles/common";
@@ -15,27 +16,41 @@ const categories = [
 ];
 
 export default function InventoryScreen() {
-  return (
-    <View style={commonStyles.container}>
-      <Text style={styles.title}>Choose a Category</Text>
+  const router = useRouter();
 
-      <FlatList
-        showsVerticalScrollIndicator={false}
-        data={categories}
-        numColumns={2}
-        keyExtractor={(item) => item.key}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={
-              (styles.item,
-              index === categories.length - 1 ? styles.lastItem : {})
-            }
-          >
-            <InventoryCategory category={item.key as any} />
-          </TouchableOpacity>
-        )}
+  return (
+    <>
+      <Stack.Screen
+        options={{ title: "Inventory", headerTitleAlign: "center" }}
       />
-    </View>
+
+      <View style={commonStyles.container}>
+        <Text style={styles.title}>Choose a Category</Text>
+
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={categories}
+          numColumns={2}
+          keyExtractor={(_item, index) => index.toString()}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity
+              style={[
+                styles.item,
+                index === categories.length - 1 ? styles.lastItem : {},
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/category-items",
+                  params: { category: item.key },
+                })
+              }
+            >
+              <InventoryCategory category={item.key as any} />
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    </>
   );
 }

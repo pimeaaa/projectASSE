@@ -98,7 +98,7 @@ export function OrderItem({ order, updateOrderStatus, role }: Props) {
       {/* List of order items */}
       <FlatList
         data={order.items}
-        keyExtractor={(index) => index.toString()}
+        keyExtractor={(_item, index) => index.toString()}
         renderItem={({ item }) => (
           <Text style={styles.orderItem}>
             • {item.quantity}x {item.name}
