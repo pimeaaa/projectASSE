@@ -8,7 +8,7 @@ import WaterIcon from "@/assets/icons/water.svg";
 
 import React from "react";
 import { Text, View } from "react-native";
-import { styles } from "../app/styles/inventoryStyles"; // Ensure this is included!
+import { styles } from "../styles/inventoryStyles"; // Ensure this is included!
 
 const icons = {
   coffee: CoffeeIcon,

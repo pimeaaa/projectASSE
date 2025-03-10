@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { commonStyles } from "../styles/common";
-import { styles } from "../styles/orderStyles";
+import { commonStyles } from "../../styles/common";
+import { styles } from "../../styles/orderStyles";
 
 export default function OrdersScreen() {
   const { orders, setOrders, loading } = useOrders();
@@ -24,7 +24,12 @@ export default function OrdersScreen() {
     availableStatuses,
   } = useOrderFilter(orders);
 
-  if (loading) return <ActivityIndicator />;
+  if (loading)
+    return (
+      <View style={commonStyles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
 
   return (
     <>
@@ -32,21 +37,6 @@ export default function OrdersScreen() {
         options={{
           title: "Orders",
           headerTitleAlign: "center",
-          // headerStyle: {
-          //   backgroundColor: "#f8f8f8", // top bar BG color
-          // },
-          // headerTitleStyle: {
-          //   fontWeight: "bold",
-          //   fontSize: 18,
-          //   color: "#333", // title color
-          // },
-          // headerTintColor: "#007AFF", // color for back button & icons
-          // headerBackTitle: "Back", // iOS-only: text next to the back button
-          // headerRight: () => (
-          //   <TouchableOpacity onPress={() => {}}>
-          //     <Text>Save</Text>
-          //   </TouchableOpacity>
-          // ),
         }}
       />
 

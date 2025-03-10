@@ -79,7 +79,7 @@ export const categoryItemsStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 16,
     marginVertical: 8,
     marginHorizontal: 4, // ensures side shadow
     borderRadius: 12,
@@ -181,7 +181,7 @@ export const categoryItemsStyles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#5C5C5C",
-    marginBottom: 16,
+    marginBottom: 6,
   },
   errorText: {
     color: "#FF5252",

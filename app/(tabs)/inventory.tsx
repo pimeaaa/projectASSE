@@ -1,22 +1,28 @@
 import { InventoryCategory } from "@/components/InventoryCategory";
+import { useCategories } from "@/hooks/useCategories";
 import { Stack, useRouter } from "expo-router";
 import React from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
-import { commonStyles } from "../styles/common";
-import { styles } from "../styles/inventoryStyles"; // Reuse styles if applicable
-
-const categories = [
-  { key: "coffee", label: "Coffee" },
-  { key: "tea", label: "Tea" },
-  { key: "soda", label: "Soda" },
-  { key: "juice", label: "Juice" },
-  { key: "water", label: "Water" },
-  { key: "pastries", label: "Pastries" },
-  { key: "menu", label: "Menu" },
-];
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { commonStyles } from "../../styles/common";
+import { styles } from "../../styles/inventoryStyles"; // Reuse styles if applicable
 
 export default function InventoryScreen() {
   const router = useRouter();
+
+  const { categories, loading } = useCategories();
+
+  if (loading)
+    return (
+      <View style={commonStyles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
 
   return (
     <>

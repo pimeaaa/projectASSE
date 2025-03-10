@@ -1,4 +1,4 @@
-import { StatusType } from "@/app/types";
+import { StatusType } from "@/config/types";
 import { useState } from "react";
 import { Order } from "./useOrders";
 

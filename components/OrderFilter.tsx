@@ -1,8 +1,8 @@
-import { StatusType } from "@/app/types";
+import { StatusType } from "@/config/types";
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { styles } from "../app/styles/orderStyles";
+import { styles } from "../styles/orderStyles";
 
 interface Props {
   selectedStatus: StatusType;

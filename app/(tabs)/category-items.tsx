@@ -1,6 +1,8 @@
-import { categoryItemsStyles as styles } from "@/app/styles/categoryItemsStyles";
 import { useInventoryActions } from "@/hooks/useInventoryActions";
 import { useInventoryItems } from "@/hooks/useInventoryItems";
+import { categoryItemsStyles as styles } from "@/styles/categoryItemsStyles";
+import { commonStyles } from "@/styles/common";
+
 import { MaterialIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -11,7 +13,6 @@ import {
   Modal,
   Pressable,
   Text,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -28,6 +29,8 @@ import TeaIcon from "@/assets/icons/tea.svg";
 import DeleteIcon from "@/assets/icons/trash.svg";
 import WaterIcon from "@/assets/icons/water.svg";
 import EditIcon from "@/assets/icons/write.svg";
+import ValidatedTextInput from "@/components/ValidationTextInput";
+import { useValidation } from "@/hooks/useValidation";
 
 const iconsMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
   coffee: CoffeeIcon,
@@ -40,33 +43,29 @@ const iconsMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
 };
 
 export default function CategoryItemsScreen() {
-  // 1) Always call hooks in the same order
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category?: string }>();
-
-  // Provide a fallback so the hooks below never get skipped
-  // (This prevents a conditional hook order mismatch.)
   const safeCategory = category ?? "unknown";
-
-  // Firestore data
   const { items, setItems, loading } = useInventoryItems(safeCategory);
   const { addItem, updateItem, deleteItem } = useInventoryActions(setItems);
-
-  // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
-
-  // Form fields
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
-  // If category was truly not passed, we show a placeholder
+  const {
+    nameError,
+    priceError,
+    validateName,
+    validatePrice,
+    setNameError,
+    setPriceError,
+  } = useValidation();
+
   if (!category) {
     return (
       <>
-        {/* 2) We declare a Stack.Screen to set the top bar’s title */}
         <Stack.Screen
           options={{ title: "Inventory", headerTitleAlign: "center" }}
         />
@@ -77,10 +76,6 @@ export default function CategoryItemsScreen() {
     );
   }
 
-  // Hooks are already called above, so no mismatch.
-
-  // 2) We set the screen title with <Stack.Screen>
-  //    instead of router.setOptions:
   return (
     <>
       <Stack.Screen
@@ -100,8 +95,12 @@ export default function CategoryItemsScreen() {
         setIsEditing={setIsEditing}
         currentItemId={currentItemId}
         setCurrentItemId={setCurrentItemId}
-        setErrorMessage={setErrorMessage}
-        errorMessage={errorMessage}
+        setNameError={setNameError}
+        setPriceError={setPriceError}
+        nameError={nameError}
+        validateName={validateName}
+        validatePrice={validatePrice}
+        priceError={priceError}
         itemName={itemName}
         setItemName={setItemName}
         itemPrice={itemPrice}
@@ -111,11 +110,6 @@ export default function CategoryItemsScreen() {
   );
 }
 
-/**
- * Extracted the main UI into a child component so we can still
- * conditionally render above (for the "no category" case)
- * without messing up the hooks order.
- */
 function CategoryItemsContent(props: {
   category: string;
   items: any[];
@@ -129,9 +123,13 @@ function CategoryItemsContent(props: {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   currentItemId: string | null;
   setCurrentItemId: React.Dispatch<React.SetStateAction<string | null>>;
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>;
-  errorMessage: string;
+  setNameError: React.Dispatch<React.SetStateAction<string>>;
+  setPriceError: React.Dispatch<React.SetStateAction<string>>;
+  nameError: string;
+  priceError: string;
   itemName: string;
+  validateName: (name: string) => boolean;
+  validatePrice: (name: string) => boolean;
   setItemName: React.Dispatch<React.SetStateAction<string>>;
   itemPrice: string;
   setItemPrice: React.Dispatch<React.SetStateAction<string>>;
@@ -149,20 +147,25 @@ function CategoryItemsContent(props: {
     setIsEditing,
     currentItemId,
     setCurrentItemId,
-    setErrorMessage,
-    errorMessage,
+    setNameError,
+    setPriceError,
+    nameError,
+    priceError,
     itemName,
     setItemName,
     itemPrice,
     setItemPrice,
+    validateName,
+    validatePrice,
   } = props;
 
-  // Helpers
   function resetForm() {
     setItemName("");
     setItemPrice("");
     setCurrentItemId(null);
     setIsEditing(false);
+    setNameError("");
+    setPriceError("");
   }
 
   function handleAddNew() {
@@ -171,22 +174,13 @@ function CategoryItemsContent(props: {
   }
 
   function handleConfirmAdd() {
-    if (!itemName.trim()) {
-      setErrorMessage("Please enter a name.");
-      return;
-    }
-    if (!itemPrice.trim()) {
-      setErrorMessage("Please enter a price.");
+    if (!validateName(itemName) || !validatePrice(itemPrice)) {
       return;
     }
 
-    if (!itemName.trim() || !itemPrice.trim()) {
-      Alert.alert("Error", "Please enter name and price");
-      return;
-    }
-    // close modal immediately, then add
+    const priceValue = parseFloat(itemPrice);
+    addItem(category, itemName.trim(), priceValue);
     setModalVisible(false);
-    addItem(category, itemName.trim(), parseFloat(itemPrice));
   }
 
   function handleEdit(id: string, name: string, price: number) {
@@ -198,25 +192,20 @@ function CategoryItemsContent(props: {
   }
 
   function handleConfirmEdit() {
-    if (!itemName.trim()) {
-      setErrorMessage("Please enter a name.");
-      return;
-    }
-    if (!itemPrice.trim()) {
-      setErrorMessage("Please enter a price.");
+    if (
+      !validateName(itemName) ||
+      !validatePrice(itemPrice) ||
+      !currentItemId
+    ) {
       return;
     }
 
-    if (!itemName.trim() || !itemPrice.trim() || !currentItemId) {
-      Alert.alert("Error", "Please enter valid name and price");
-      return;
-    }
-    // close modal immediately, then update
-    setModalVisible(false);
+    const priceValue = parseFloat(itemPrice);
     updateItem(currentItemId, {
       name: itemName.trim(),
-      price: parseFloat(itemPrice),
+      price: priceValue,
     });
+    setModalVisible(false);
   }
 
   function handleDelete(id: string) {
@@ -232,7 +221,6 @@ function CategoryItemsContent(props: {
 
   const CategorySVG = iconsMap[category] || MenuIcon;
 
-  // item card
   const renderItem = ({ item }: { item: any }) => {
     return (
       <View style={styles.itemCard}>
@@ -253,7 +241,6 @@ function CategoryItemsContent(props: {
           >
             <EditIcon width={24} height={24} color="#5C5C5C" />
           </TouchableOpacity>
-          {/* vertical separator */}
           <View style={styles.actionSeparator} />
           <TouchableOpacity
             style={styles.actionButton}
@@ -268,7 +255,7 @@ function CategoryItemsContent(props: {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={commonStyles.centered}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -279,7 +266,6 @@ function CategoryItemsContent(props: {
 
   return (
     <View style={styles.container}>
-      {/* Category Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <HeaderSVG width={18} height={18} style={styles.headerIcon} />
@@ -319,27 +305,33 @@ function CategoryItemsContent(props: {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={(it) => it.id}
+          keyExtractor={(item, index) => item.id || index.toString()} // Fallback to index if id is missing
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 12 }}
         />
       )}
 
-      {/* Modal */}
       <Modal
         transparent
         animationType="fade"
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {
+          setModalVisible(false);
+          resetForm(); // Ensure form fields and errors are cleared
+        }}
       >
-        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            setModalVisible(false);
+            resetForm();
+          }}
+        >
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
 
         <View style={styles.modalWrapper}>
           <View style={styles.modalContainer}>
-            {/* Header: Icon, Title, and X button */}
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <CategorySVG
@@ -353,36 +345,39 @@ function CategoryItemsContent(props: {
                 </Text>
               </View>
               <Pressable
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  setModalVisible(false);
+                  resetForm();
+                }}
                 style={styles.closeButton}
               >
                 <CloseIcon width={24} height={24} color="#5C5C5C" />
               </Pressable>
             </View>
 
-            {/* Body / Form */}
             <View style={styles.modalBody}>
-              <TextInput
-                style={styles.input}
+              <ValidatedTextInput
                 placeholder="eg. Espresso"
-                placeholderTextColor="#B8B8B8"
                 value={itemName}
-                onChangeText={setItemName}
+                onChangeText={(text) => {
+                  setItemName(text);
+                  validateName(text);
+                }}
+                error={nameError}
+                onBlur={() => validateName(itemName)}
               />
-              <TextInput
-                style={styles.input}
+
+              <ValidatedTextInput
                 placeholder="12 MAD"
-                placeholderTextColor="#B8B8B8"
                 keyboardType="numeric"
                 value={itemPrice}
-                onChangeText={setItemPrice}
+                onChangeText={(text) => {
+                  setItemPrice(text);
+                  validatePrice(text);
+                }}
+                error={priceError}
+                onBlur={() => validatePrice(itemPrice)}
               />
-
-              {errorMessage ? (
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              ) : null}
-
-              {/* Validate Button */}
               <TouchableOpacity
                 style={styles.validateButton}
                 onPress={isEditing ? handleConfirmEdit : handleConfirmAdd}

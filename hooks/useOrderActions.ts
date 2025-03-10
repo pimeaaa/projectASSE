@@ -7,7 +7,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../app/config/firebaseConfig";
+import { db } from "../config/firebaseConfig";
 import { Order } from "./useOrders";
 
 // Function to generate the next order ID

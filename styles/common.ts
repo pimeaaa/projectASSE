@@ -11,4 +11,9 @@ export const commonStyles = StyleSheet.create({
     justifyContent: "space-around",
     marginBottom: 10,
   },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

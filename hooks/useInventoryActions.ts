@@ -1,5 +1,5 @@
 // hooks/useInventoryActions.ts
-import { db } from "@/app/config/firebaseConfig";
+import { db } from "@/config/firebaseConfig";
 import {
   addDoc,
   collection,
@@ -23,11 +23,10 @@ export function useInventoryActions(
         createdAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, "inventory"), newItem);
-      // Update local state
-      setItems((prev) => [{ id: docRef.id, ...newItem }, ...prev]);
+      // Add item to Firestore (onSnapshot will handle UI update)
+      await addDoc(collection(db, "inventory"), newItem);
 
-      console.log("Item added:", docRef.id);
+      console.log("Item added successfully");
     } catch (error) {
       console.error("Error adding item:", error);
     }
